@@ -19,15 +19,13 @@ CUDA capability.
 The main toolset is built in python and machine learning components
 are implemented on [`PyTorch`](https://pytorch.org/).
 
-Python dependencies managed through [`virtualenv`](https://virtualenv.pypa.io/en/latest/). After installing `virtualenv`,
-create an environment with:
+Python dependencies managed through [`conda`]. After installing `conda`, create an environment with:
 
-    virtualenv venv
-    . venv/bin/activate
+    conda create -n gatsby python=3.8
 
-Then install dependencies with
+Then activate the environment with
 
-    pip install -r requirements.txt
+    conda activate gatsby
 
 ### Data Configuration
 
