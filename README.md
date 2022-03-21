@@ -1,4 +1,5 @@
-# SpatialTranscriptomicsAttention
+# GATSBy
+## *G*raph *AT*tention for *S*patial *B*iolog*y*
 Tools to infer local feature dependencies in spatial transcriptomics datasets
 
 All code developed for use on \*NIX systems with
