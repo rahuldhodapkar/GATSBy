@@ -12,9 +12,8 @@
 
 ## general
 import csv
+from tqdm import tqdm
 import numpy as np
-import pandas as pd
-import os
 
 ## torch
 import torch
@@ -41,14 +40,19 @@ visium_raw = scanpy.read_visium(visium_path)
 ################################################################################
 
 ################################################################################
-# (1) Create a node for each spot.
+# (1) Create a node for each spot x gene pair.
 #
-
-x = torch.tensor(visium_raw.X.todense(), dtype=torch.float)
+# NOTE that we will create a node only for pairs with non-zero expression
+#      (e.g. sparsely) and will store these as a tensor in "spot"-major order.
+#
+#           V(spot_i, gene_j) = V[(i-1)*n_genes + j]
+#
+coo_expr_data = visium_raw.X.tocoo()
+x = torch.tensor(np.transpose(coo_expr_data.data), dtype=torch.float)
 
 ################################################################################
 # (2) Create edges between vertices corresponding to proximal spots, as
-#     well as loop edges for the same spot.
+#     well as those corresponding to the same spot.
 #
 # NOTE that this wiring must take into account the spatial arrangement of the
 #      spots.  For example, Visium uses a honeycomb or "orange-packing" spot
@@ -113,6 +117,27 @@ for i in range(visium_raw.obs.shape[0]):
 
 edge_index = torch.tensor(np.array(adjacent_spots), dtype=torch.long)
 
+print('ERROR: ***Script not fully functional, terminating***' ,file=sys.stderr)
+sys.exit(1)
+
+spot2datarange = {}
+for i in tqdm(range(len(coo_expr_data.data))):
+    if coo_expr_data.row[i] in spot2datarange:
+        spot2datarange[coo_expr_data.row[i]].append(i)
+    else:
+        spot2datarange[coo_expr_data.row[i]] = [i]
+
+
+edges = []
+for si, sj in tqdm(adjacent_spots):
+    for node_in_si in spot2datarange[si]:
+        for node_in_sj in spot2datarange[sj]:
+            edges.append((node_in_si, node_in_sj))
+
+
+edge_index = torch.tensor(np.array(edges), dtype=torch.long)
+
+
 ################################################################################
 # (3) Train graph attention model
 #
@@ -128,7 +153,7 @@ data = loader.dataset[0].to(device)
 optimizer = torch.optim.Adam(model.parameters(), lr=0.005, weight_decay=5e-4)
 
 model.train()
-for epoch in range(10):
+for epoch in range(1000):
     model.train()
     optimizer.zero_grad()
     out = model(data)
@@ -138,13 +163,3 @@ for epoch in range(10):
     print("Epoch {:05d} | Loss {:.4f}".format(
         epoch, loss.item()))
 
-importance_df = pd.DataFrame({
-    'i': model.attention[0][0,:].detach().numpy()
-    ,'j': model.attention[0][1,:].detach().numpy()
-    ,'v': np.transpose(model.attention[1].detach().numpy())[0]
-})
-
-os.makedirs('./calc/graph_attention', exist_ok=True)
-importance_df.to_csv('./calc/graph_attention/importance_df.csv')
-
-print("All done!")

@@ -22,9 +22,9 @@ edge_index = torch.tensor([[0, 1],
                            [1, 0],
                            [1, 2],
                            [2, 1]], dtype=torch.long)
-x = torch.tensor([[5],
-                  [3],
-                  [1]], dtype=torch.float)
+x = torch.tensor([[5, 1, 5],
+                  [3, 3, 1],
+                  [1, 2, 4]], dtype=torch.float)
 data_obj = Data(x=x, edge_index=edge_index.t().contiguous())
 data_list = [data_obj]
 loader = DataLoader(data_list, batch_size=32)

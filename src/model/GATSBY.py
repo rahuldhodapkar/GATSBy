@@ -1,3 +1,9 @@
+#!/usr/bin/env python
+#
+# Core GAT model for GATSBY
+#
+# @author Rahul Dhodapkar
+#
 
 import torch.nn.functional as F
 import torch
@@ -7,7 +13,7 @@ class GATSBY(torch.nn.Module):
     def __init__(self, dataset):
         super(GATSBY, self).__init__()
 
-        self.hid = 8
+        self.hid = 8 # ***NOTE*** need to tune this param
         self.in_head = 8
         self.out_head = 1
 
