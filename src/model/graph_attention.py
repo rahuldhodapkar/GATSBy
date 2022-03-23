@@ -15,6 +15,7 @@ import csv
 import numpy as np
 import pandas as pd
 import os
+import itertools
 
 ## torch
 import torch
@@ -144,7 +145,14 @@ importance_df = pd.DataFrame({
     ,'v': np.transpose(model.attention[1].detach().numpy())[0]
 })
 
+original_edge_df = pd.DataFrame({
+    'i': [i for (i,j) in adjacent_spots]
+    ,'j': [j for (i,j) in adjacent_spots]
+    ,'v': itertools.repeat(1, len(adjacent_spots))
+})
+
 os.makedirs('./calc/graph_attention', exist_ok=True)
 importance_df.to_csv('./calc/graph_attention/importance_df.csv')
+original_edge_df.to_csv('./calc/graph_attention/original_edge_df.csv')
 
 print("All done!")
