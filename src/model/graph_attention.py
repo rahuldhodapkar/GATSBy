@@ -16,6 +16,7 @@ import numpy as np
 import pandas as pd
 import os
 import itertools
+import random
 
 ## torch
 import torch
@@ -29,6 +30,19 @@ import torch.nn.functional as F
 ## scRNAseq
 import scanpy
 import anndata
+
+################################################################################
+## Helper Functions
+################################################################################
+
+#
+# Adapted from PetarV-/GAT
+#
+def sample_mask(idx, l):
+    """Create mask."""
+    mask = np.zeros(l)
+    mask[idx] = 1
+    return np.array(mask, dtype=bool)
 
 ################################################################################
 ## Load Data
@@ -118,27 +132,42 @@ edge_index = torch.tensor(np.array(adjacent_spots), dtype=torch.long)
 # (3) Train graph attention model
 #
 
+PERCENT_TO_MASK = 0.2
+
 data_obj = Data(x=x, edge_index=edge_index.t().contiguous())
 data_list = [data_obj]
 loader = DataLoader(data_list, batch_size=32)
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model = GATSBY(loader.dataset[0]).to(device)
-data = loader.dataset[0].to(device)
+
 
 optimizer = torch.optim.Adam(model.parameters(), lr=0.005, weight_decay=5e-4)
 
+# train model
+random.seed(42)
+
 model.train()
-for epoch in range(10):
-    model.train()
+for epoch in range(30):
+    # prepare data
+    data = loader.dataset[0].to(device)
+    random_mask = sample_mask(
+        np.random.choice(a = data.x.shape[0],
+            size = int(data.x.shape[0] * PERCENT_TO_MASK)),
+        data.x.shape)
+    rand_y = data.x[random_mask,:]
+    data.x = torch.masked_fill(data.x, torch.tensor(random_mask, dtype=torch.bool), 0.)
+    # run training
     optimizer.zero_grad()
     out = model(data)
-    loss = F.mse_loss(out, data.x)
-    loss.backward()
+    loss = F.mse_loss(rand_y, out[random_mask,:])
+    loss.backward(retain_graph=True) # ***fails without retain_graph
     optimizer.step()
     print("Epoch {:05d} | Loss {:.4f}".format(
         epoch, loss.item()))
 
+
+# save attention data
 importance_df = pd.DataFrame({
     'i': model.attention[0][0,:].detach().numpy()
     ,'j': model.attention[0][1,:].detach().numpy()
