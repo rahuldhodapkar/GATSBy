@@ -17,6 +17,7 @@ import pandas as pd
 import os
 import itertools
 import random
+import pickle
 
 ## torch
 import torch
@@ -43,6 +44,13 @@ def sample_mask(idx, l):
     mask = np.zeros(l)
     mask[idx] = 1
     return np.array(mask, dtype=bool)
+
+
+def scale(X, x_min, x_max):
+    nom = (X-X.min(axis=0))*(x_max-x_min)
+    denom = X.max(axis=0) - X.min(axis=0)
+    denom[denom==0] = 1
+    return x_min + nom/denom
 
 ################################################################################
 ## Load Data
@@ -134,7 +142,8 @@ edge_index = torch.tensor(np.array(adjacent_spots), dtype=torch.long)
 
 PERCENT_TO_MASK = 0.2
 
-data_obj = Data(x=x, edge_index=edge_index.t().contiguous())
+data_obj = Data(x=x,
+                edge_index=edge_index.t().contiguous())
 data_list = [data_obj]
 loader = DataLoader(data_list, batch_size=32)
 
@@ -148,7 +157,7 @@ optimizer = torch.optim.Adam(model.parameters(), lr=0.005, weight_decay=5e-4)
 random.seed(42)
 
 model.train()
-for epoch in range(30):
+for epoch in range(100):
     # prepare data
     data = loader.dataset[0].to(device)
     random_mask = sample_mask(
@@ -183,5 +192,7 @@ original_edge_df = pd.DataFrame({
 os.makedirs('./calc/graph_attention', exist_ok=True)
 importance_df.to_csv('./calc/graph_attention/importance_df.csv')
 original_edge_df.to_csv('./calc/graph_attention/original_edge_df.csv')
+
+torch.save(model, './calc/graph_attention/model.pickle')
 
 print("All done!")

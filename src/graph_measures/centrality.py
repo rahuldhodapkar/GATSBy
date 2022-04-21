@@ -26,7 +26,7 @@ import anndata
 ################################################################################
 
 visium_path = './data/visium/normal_human_prostate'
-visium_raw = scanpy.read_visium(visium_path)
+visium_raw = sc.read_visium(visium_path)
 
 importance_df = pd.read_csv('./calc/graph_attention/importance_df.csv')
 original_edge_df = pd.read_csv('./calc/graph_attention/original_edge_df.csv')
