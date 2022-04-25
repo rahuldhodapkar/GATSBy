@@ -27,6 +27,7 @@ from src.model.GATSBY import GATSBY
 from torch_geometric.data import Data
 from torch_geometric.loader import DataLoader
 import torch.nn.functional as F
+import torch_geometric.transforms as T
 
 ## scRNAseq
 import scanpy
@@ -140,15 +141,17 @@ edge_index = torch.tensor(np.array(adjacent_spots), dtype=torch.long)
 # (3) Train graph attention model
 #
 
-PERCENT_TO_MASK = 0.2
 
-data_obj = Data(x=x,
-                edge_index=edge_index.t().contiguous())
-data_list = [data_obj]
-loader = DataLoader(data_list, batch_size=32)
+data = Data(x=x, edge_index=edge_index.t().contiguous(), y = 1)
+transform = T.RandomNodeSplit(
+        num_train_per_class = 20,
+        num_val = 500,
+        num_test = 1000
+    )
+data = transform(data)
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-model = GATSBY(loader.dataset[0]).to(device)
+model = GATSBY(data).to(device)
 
 
 optimizer = torch.optim.Adam(model.parameters(), lr=0.005, weight_decay=5e-4)
@@ -156,24 +159,21 @@ optimizer = torch.optim.Adam(model.parameters(), lr=0.005, weight_decay=5e-4)
 # train model
 random.seed(42)
 
-model.train()
-for epoch in range(100):
+for epoch in range(10):
+    model.train()
     # prepare data
-    data = loader.dataset[0].to(device)
-    random_mask = sample_mask(
-        np.random.choice(a = data.x.shape[0],
-            size = int(data.x.shape[0] * PERCENT_TO_MASK)),
-        data.x.shape)
-    rand_y = data.x[random_mask,:]
-    data.x = torch.masked_fill(data.x, torch.tensor(random_mask, dtype=torch.bool), 0.)
-    # run training
+    data = data.to(device)
     optimizer.zero_grad()
     out = model(data)
-    loss = F.mse_loss(rand_y, out[random_mask,:])
-    loss.backward(retain_graph=True) # ***fails without retain_graph
+    loss = torch.sqrt(F.mse_loss(out[data.train_mask], data.x[data.train_mask]))
+    loss.backward()
     optimizer.step()
-    print("Epoch {:05d} | Loss {:.4f}".format(
-        epoch, loss.item()))
+    # eval
+    model.eval()
+    pred = model(data)
+    test_loss = torch.sqrt(F.mse_loss(pred[data.test_mask], data.x[data.test_mask]))
+    print("Epoch {:05d} | Train RMSE Loss {:.4f} | Test RMSE Loss {:.4f}".format(
+        epoch, loss.item(), test_loss.item()))
 
 
 # save attention data
