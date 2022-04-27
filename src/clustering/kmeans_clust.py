@@ -14,9 +14,9 @@ import csv
 import igraph
 import pandas as pd
 import numpy as np
-import sklearn.cluster as clust
+import sklearn.cluster
 import sklearn.decomposition
-import umap.umap_ as umap
+import sklearn.manifold
 import os
 
 # viz
@@ -50,14 +50,12 @@ model = torch.load('./calc/graph_attention/model.pickle')
 ################################################################################
 
 # Generate dimensional reduction and clustering
-X = model.latent_embedding.detach().numpy()
-clustering = clust.KMeans(n_clusters=2, random_state=42).fit(X)
+X = model.latent_embedding2.detach().numpy()
+clustering = sklearn.cluster.KMeans(n_clusters=2, random_state=42).fit(X)
 X_pca = sklearn.decomposition.PCA(n_components=30).fit_transform(X)
 
-X = np.random.random((5,5))
-reducer = umap.UMAP(random_state=42)
-embedding = reducer.fit_transform(X) # ***ERROR in umap-learn, requires call on random data
-embedding = reducer.fit_transform(X_pca)
+reducer = sklearn.manifold.TSNE(random_state=42)
+embedding = reducer.fit_transform(X) # can also fit to X_pca
 
 # plot points
 sns.scatterplot(
@@ -66,7 +64,7 @@ sns.scatterplot(
     hue = clustering.labels_
 )
 
-plt.savefig('./fig/graph_attention/latent_space_umap.png', dpi=120)
+plt.savefig('./fig/graph_attention/latent_space_tsne.png', dpi=120)
 
 ################################################################################
 ## View Clustering on Latent Space

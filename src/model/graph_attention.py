@@ -159,7 +159,7 @@ optimizer = torch.optim.Adam(model.parameters(), lr=0.005, weight_decay=5e-4)
 # train model
 random.seed(42)
 
-for epoch in range(10):
+for epoch in range(50):
     model.train()
     # prepare data
     data = data.to(device)
@@ -178,9 +178,9 @@ for epoch in range(10):
 
 # save attention data
 importance_df = pd.DataFrame({
-    'i': model.attention[0][0,:].detach().numpy()
-    ,'j': model.attention[0][1,:].detach().numpy()
-    ,'v': np.transpose(model.attention[1].detach().numpy())[0]
+    'i': model.attention2[0][0,:].detach().numpy()
+    ,'j': model.attention2[0][1,:].detach().numpy()
+    ,'v': np.transpose(model.attention2[1].detach().numpy())[0]
 })
 
 original_edge_df = pd.DataFrame({
