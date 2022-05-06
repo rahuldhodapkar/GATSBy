@@ -57,7 +57,7 @@ def scale(X, x_min, x_max):
 ## Load Data
 ################################################################################
 
-visium_path = './data/visium/normal_human_prostate'
+visium_path = './data/visium/human_prostate_adenocarcinoma'
 visium_raw = scanpy.read_visium(visium_path)
 
 ################################################################################
@@ -159,13 +159,19 @@ optimizer = torch.optim.Adam(model.parameters(), lr=0.005, weight_decay=5e-4)
 # train model
 random.seed(42)
 
-for epoch in range(50):
+train_data_vals = data.x[data.train_mask].clone()
+data.x = torch.masked_fill(data.x, torch.tensor(data.train_mask.unsqueeze(-1), dtype=torch.bool), 0.)
+
+epoch_ix = []
+train_losses = []
+test_losses = []
+for epoch in range(10):
     model.train()
     # prepare data
     data = data.to(device)
     optimizer.zero_grad()
     out = model(data)
-    loss = torch.sqrt(F.mse_loss(out[data.train_mask], data.x[data.train_mask]))
+    loss = torch.sqrt(F.mse_loss(out[data.train_mask], train_data_vals))
     loss.backward()
     optimizer.step()
     # eval
@@ -174,7 +180,16 @@ for epoch in range(50):
     test_loss = torch.sqrt(F.mse_loss(pred[data.test_mask], data.x[data.test_mask]))
     print("Epoch {:05d} | Train RMSE Loss {:.4f} | Test RMSE Loss {:.4f}".format(
         epoch, loss.item(), test_loss.item()))
+    epoch_ix.append(epoch)
+    train_losses.append(loss.item())
+    test_losses.append(test_loss.item())
 
+loss_curves = pd.DataFrame({
+    'epoch': epoch_ix
+    ,'train_loss': train_losses
+    ,'test_loss': test_losses
+})
+loss_curves.to_csv('./calc/graph_attention/loss_curves.csv')
 
 # save attention data
 importance_df = pd.DataFrame({
