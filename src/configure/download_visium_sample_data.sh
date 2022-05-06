@@ -48,7 +48,7 @@ curl https://cf.10xgenomics.com/samples/spatial-exp/1.3.0/Visium_FFPE_Human_Pros
 
 ########
 # Human Prostate Cancer, Adenocarcinoma with Invasive Carcinoma (FFPE)
-# https://www.10xgenomics.com/resources/datasets/normal-human-prostate-ffpe-1-standard-1-3-0
+# https://www.10xgenomics.com/resources/datasets/human-prostate-cancer-adenocarcinoma-with-invasive-carcinoma-ffpe-1-standard-1-3-0
 #
 mkdir -p ./data/visium/human_prostate_adenocarcinoma
 

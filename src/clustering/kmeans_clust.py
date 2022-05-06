@@ -24,7 +24,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 # pytorch
-import torch
+#import torch
 
 ## scRNAseq
 import scanpy as sc
@@ -43,16 +43,18 @@ os.makedirs('./fig/graph_attention', exist_ok=True)
 visium_path = './data/visium/normal_human_prostate'
 visium_raw = sc.read_visium(visium_path)
 
-model = torch.load('./calc/graph_attention/model.pickle')
+#model = torch.load('./calc/graph_attention/model.pickle')
+
+X = np.load('./calc/graph_attention/embeddings.npy')
 
 ################################################################################
 ## Perform Dimensionality Reduction of Latent Space
 ################################################################################
 
 # Generate dimensional reduction and clustering
-X = model.latent_embedding2.detach().numpy()
+#X = model.latent_embedding2.detach().numpy()
 clustering = sklearn.cluster.KMeans(n_clusters=2, random_state=42).fit(X)
-X_pca = sklearn.decomposition.PCA(n_components=30).fit_transform(X)
+#X_pca = sklearn.decomposition.PCA(n_components=30).fit_transform(X)
 
 reducer = sklearn.manifold.TSNE(random_state=42)
 embedding = reducer.fit_transform(X) # can also fit to X_pca
@@ -65,6 +67,19 @@ sns.scatterplot(
 )
 
 plt.savefig('./fig/graph_attention/latent_space_tsne.png', dpi=120)
+
+# compare against tsne + pca w/out 
+sc.tl.pca(visium_raw, n_comps=30)
+
+
+################################################################################
+## Construct Pseudotime from Latent Space
+################################################################################
+
+adata = sc.AnnData(X)
+sc.pp.neighbors(adata)
+sc.tl.diffmap(adata, n_comps=10)
+sc.tl.dpt(adata, n_dcs=10)
 
 ################################################################################
 ## View Clustering on Latent Space
@@ -79,5 +94,3 @@ sc.pl.spatial(
     alpha=0.4,
     show=False)
 plt.savefig('./fig/graph_attention/tissue_clustering.png', dpi=300)
-
-

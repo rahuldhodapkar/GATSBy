@@ -195,4 +195,7 @@ original_edge_df.to_csv('./calc/graph_attention/original_edge_df.csv')
 
 torch.save(model, './calc/graph_attention/model.pickle')
 
+X = model.latent_embedding2.detach().numpy()
+np.save('./calc/graph_attention/embeddings.npy', X)
+
 print("All done!")
