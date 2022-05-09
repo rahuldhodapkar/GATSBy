@@ -6,6 +6,7 @@ data
 calc
 fig
 .DS_Store
+.idea
 
 #########################################################
 ## GITHUB BOILERPLATE

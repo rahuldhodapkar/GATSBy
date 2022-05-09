@@ -165,7 +165,7 @@ data.x = torch.masked_fill(data.x, torch.tensor(data.train_mask.unsqueeze(-1), d
 epoch_ix = []
 train_losses = []
 test_losses = []
-for epoch in range(10):
+for epoch in range(200):
     model.train()
     # prepare data
     data = data.to(device)

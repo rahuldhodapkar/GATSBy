@@ -53,7 +53,7 @@ X = np.load('./calc/graph_attention/embeddings.npy')
 
 # Generate dimensional reduction and clustering
 #X = model.latent_embedding2.detach().numpy()
-clustering = sklearn.cluster.KMeans(n_clusters=4, random_state=42).fit(X)
+clustering = sklearn.cluster.KMeans(n_clusters=2, random_state=42).fit(X)
 #X_pca = sklearn.decomposition.PCA(n_components=30).fit_transform(X)
 
 reducer = sklearn.manifold.TSNE(random_state=42)
