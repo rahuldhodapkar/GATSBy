@@ -30,4 +30,7 @@ ggplot(plot.df, aes(x=Var1, y=Var2, fill=value)) +
 plot.df$weight = plot.df$value
 # now look through existing gene modules?
 gene.graph <- graph_from_data_frame(plot.df, directed = T)
-mod.opt.fast.comms <- cluster_walktrap(gene.graph)
+clust.eigen <- cluster_leading_eigen(gene.graph)
+
+gene.graph.sparse <- graph_from_data_frame(plot.df[plot.df$weight > 0.75,], directed = T)
+

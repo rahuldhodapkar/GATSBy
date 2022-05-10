@@ -7,9 +7,12 @@
 #
 
 import torch
+from torch import Tensor
 from torch.nn import Sequential as Seq, Linear, ReLU
 import torch.nn as nn
 from torch_geometric.nn import MessagePassing
+from torch_sparse import SparseTensor
+
 
 class GeneAttentionConv(MessagePassing):
     def __init__(self, embed_dim, num_heads, input_dim):

@@ -20,7 +20,12 @@ class GATSBYGene(torch.nn.Module):
         self.embed_dim = embed_dim
         self.input_dim = input_dim
 
-        self.conv = GeneAttentionConv(
+        self.conv1 = GeneAttentionConv(
+            embed_dim=embed_dim,
+            num_heads=num_heads,
+            input_dim=input_dim
+        )
+        self.conv2 = GeneAttentionConv(
             embed_dim=embed_dim,
             num_heads=num_heads,
             input_dim=input_dim
@@ -29,9 +34,6 @@ class GATSBYGene(torch.nn.Module):
             in_features=expression_matrix.shape[1] * input_dim,
             out_features=expression_matrix.shape[1] * input_dim
         )
-        self.layer_norm = LayerNorm(
-            normalized_shape=expression_matrix.shape[1] * input_dim
-        )
         self.linear = Linear(
             in_features=expression_matrix.shape[1] * input_dim,
             out_features=expression_matrix.shape[1]
@@ -39,31 +41,14 @@ class GATSBYGene(torch.nn.Module):
 
     def forward(self, data):
         x, edge_index = data.x, data.edge_index
-        x = F.dropout(x, p=0.1, training=self.training)
-
-        x = self.layer_norm(
-            x + F.dropout(
-                self.conv(x, edge_index)
-                , p=0.1
-                , training=self.training))
-        x = self.layer_norm(
-            x + F.dropout(
-                F.elu(self.post_conv_linear(x))
-                , p=0.1
-                , training=self.training))
+        x = F.dropout(x, p=0.6, training=self.training)
+        x = self.conv1(x, edge_index)
         self.conv1_embedding = x
-
-        x = self.layer_norm(
-            x + F.dropout(
-                self.conv(x, edge_index)
-                , p=0.1
-                , training=self.training))
-        x = self.layer_norm(
-            x + F.dropout(
-                F.elu(self.post_conv_linear(x))
-                , p=0.1
-                , training=self.training))
+        x = F.elu(x)
+        x = F.dropout(x, p=0.6, training=self.training)
+        x = self.conv2(x, edge_index)
         self.conv2_embedding = x
-
+        x = F.elu(x)
+        x = F.dropout(x, p=0.6, training=self.training)
         x = self.linear(x)
         return x
