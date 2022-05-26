@@ -53,24 +53,28 @@ X = np.load('./calc/graph_attention/embeddings.npy')
 
 # Generate dimensional reduction and clustering
 #X = model.latent_embedding2.detach().numpy()
-clustering = sklearn.cluster.KMeans(n_clusters=2, random_state=42).fit(X)
+
 #X_pca = sklearn.decomposition.PCA(n_components=30).fit_transform(X)
 
 reducer = sklearn.manifold.TSNE(random_state=42)
 embedding = reducer.fit_transform(X) # can also fit to X_pca
 
+clustering = sklearn.cluster.KMeans(n_clusters=7, random_state=42).fit(embedding)
+
 # plot points
 sns.scatterplot(
-    x = embedding[:,0],
-    y = embedding[:,1],
-    hue = clustering.labels_
+    x=embedding[:,0],
+    y=embedding[:,1],
+    hue=clustering.labels_
 )
 
 plt.savefig('./fig/graph_attention/latent_space_tsne.png', dpi=120)
 
+'''
 # compare against tsne + pca w/out 
 sc.tl.pca(visium_raw, n_comps=30)
-
+plt.savefig('./fig/graph_attention/original_space_tsne.png', dpi=120)
+'''
 
 ################################################################################
 ## Construct Pseudotime from Latent Space
@@ -85,12 +89,12 @@ sc.tl.dpt(adata, n_dcs=10)
 ## View Clustering on Latent Space
 ################################################################################
 
-visium_raw.obs['kmeans_clust'] = clustering.labels_
+visium_raw.obs['kmeans_clust'] = [str(x) for x in clustering.labels_]
 plt.rcParams["figure.figsize"] = (8, 8)
 sc.pl.spatial(
     visium_raw,
     img_key='hires',
     color=['kmeans_clust'],
-    alpha=0.4,
+    alpha=1,
     show=False)
 plt.savefig('./fig/graph_attention/tissue_clustering.png', dpi=300)
